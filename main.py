@@ -7,18 +7,18 @@ import random
 
 # Page configuration
 st.set_page_config(
-    page_title="AI Chatbot Pro",
-    page_icon="🤖",
+    page_title="Marcus - AI Nutrition Assistant",
+    page_icon="🥗",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Enhanced CSS for modern dark interface
+# Enhanced CSS for nutrition-themed interface
 st.markdown("""
 <style>
-    /* Global styles */
+    /* Global styles - Green nutrition theme */
     .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
     }
     
     /* Main container */
@@ -35,16 +35,17 @@ st.markdown("""
     .main-header {
         text-align: center;
         color: white;
-        font-size: 2.5rem;
+        font-size: 2.8rem;
         margin-bottom: 0.5rem;
         text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
     
     .sub-header {
         text-align: center;
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.2rem;
         margin-bottom: 2rem;
+        font-weight: 500;
     }
     
     /* Chat container */
@@ -75,12 +76,12 @@ st.markdown("""
     }
     
     .user-message {
-        background: linear-gradient(135deg, #667eea, #764ba2);
+        background: linear-gradient(135deg, #22c55e, #16a34a);
         color: white;
         align-self: flex-end;
         margin-left: 15%;
         border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
     }
     
     .bot-message {
@@ -119,8 +120,8 @@ st.markdown("""
     }
     
     .stTextInput > div > div > input:focus {
-        border-color: #667eea !important;
-        box-shadow: 0 0 10px rgba(102, 126, 234, 0.3) !important;
+        border-color: #22c55e !important;
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.3) !important;
     }
     
     .stTextInput > div > div > input::placeholder {
@@ -129,7 +130,7 @@ st.markdown("""
     
     /* Button styling */
     .stButton > button {
-        background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        background: linear-gradient(135deg, #22c55e, #16a34a) !important;
         color: white !important;
         border: none !important;
         border-radius: 10px !important;
@@ -140,7 +141,18 @@ st.markdown("""
     
     .stButton > button:hover {
         transform: translateY(-2px) !important;
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4) !important;
+        box-shadow: 0 5px 15px rgba(34, 197, 94, 0.4) !important;
+    }
+    
+    /* Selectbox styling */
+    .stSelectbox > div > div {
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        border: 2px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 10px !important;
+    }
+    
+    .stSelectbox > div > div > div {
+        color: white !important;
     }
     
     /* Model info styling */
@@ -156,8 +168,18 @@ st.markdown("""
     
     /* Welcome message */
     .welcome-message {
-        background: rgba(76, 175, 80, 0.2);
-        border-left: 4px solid #4caf50;
+        background: rgba(34, 197, 94, 0.2);
+        border-left: 4px solid #22c55e;
+        color: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    /* Nutrition tips */
+    .nutrition-tip {
+        background: rgba(251, 191, 36, 0.2);
+        border-left: 4px solid #fbbf24;
         color: white;
         padding: 1rem;
         border-radius: 10px;
@@ -193,59 +215,60 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Available free Hugging Face models
+# Available Qwen 2.5 models and other nutrition-focused models
 AVAILABLE_MODELS = {
-    "Conversational": [
+    "Qwen 2.5 Models": [
+        "Qwen/Qwen2.5-7B-Instruct",
+        "Qwen/Qwen2.5-3B-Instruct",
+        "Qwen/Qwen2.5-1.5B-Instruct",
+        "Qwen/Qwen2.5-0.5B-Instruct",
+        "Qwen/Qwen2.5-14B-Instruct",
+        "Qwen/Qwen2.5-32B-Instruct",
+    ],
+    "Alternative Models": [
         "microsoft/DialoGPT-medium",
-        "microsoft/DialoGPT-large", 
-        "microsoft/DialoGPT-small",
-        "facebook/blenderbot-400M-distill",
-        "facebook/blenderbot-1B-distill",
-        "facebook/blenderbot-3B",
-    ],
-    "Text Generation": [
-        "gpt2",
-        "gpt2-medium",
-        "gpt2-large",
-        "distilgpt2",
-        "EleutherAI/gpt-neo-1.3B",
-        "EleutherAI/gpt-neo-2.7B",
-        "EleutherAI/gpt-j-6B",
-        "bigscience/bloom-560m",
-        "bigscience/bloom-1b1",
-    ],
-    "Instruction Following": [
-        "google/flan-t5-small",
-        "google/flan-t5-base",
         "google/flan-t5-large",
-        "microsoft/GODEL-v1_1-base-seq2seq",
         "microsoft/GODEL-v1_1-large-seq2seq",
+        "facebook/blenderbot-1B-distill",
+        "EleutherAI/gpt-neo-2.7B",
     ],
-    "Code Generation": [
-        "Salesforce/codegen-350M-mono",
-        "Salesforce/codegen-2B-mono",
-        "microsoft/CodeGPT-small-py",
-        "codeparrot/codeparrot-small",
+    "Specialized Models": [
+        "google/flan-t5-base",
+        "microsoft/DialoGPT-large",
+        "bigscience/bloom-1b1",
     ]
 }
 
-class HuggingFaceChatbot:
-    def __init__(self, api_token: str, model_name: str = "microsoft/DialoGPT-medium"):
+# Nutrition-focused prompts and templates
+NUTRITION_PROMPTS = {
+    "general": "You are Marcus, a knowledgeable and friendly AI nutrition assistant. Your expertise includes meal planning, dietary advice, nutritional analysis, healthy recipes, and wellness guidance. Always provide evidence-based advice and remind users to consult healthcare professionals for serious health concerns.",
+    "meal_planning": "As Marcus, your nutrition assistant, help create balanced meal plans considering dietary preferences, restrictions, and health goals.",
+    "recipe_analysis": "As Marcus, analyze recipes for nutritional content, suggest healthier alternatives, and provide cooking tips.",
+    "dietary_advice": "As Marcus, provide personalized dietary recommendations based on health goals, lifestyle, and nutritional needs."
+}
+
+class MarcusNutritionChatbot:
+    def __init__(self, api_token: str, model_name: str = "Qwen/Qwen2.5-7B-Instruct"):
         self.api_token = api_token
         self.model_name = model_name
         self.api_url = f"https://api-inference.huggingface.co/models/{model_name}"
         self.headers = {"Authorization": f"Bearer {api_token}"}
         self.model_type = self._get_model_type()
+        self.nutrition_context = NUTRITION_PROMPTS["general"]
     
     def _get_model_type(self):
         """Determine model type for appropriate processing"""
-        for category, models in AVAILABLE_MODELS.items():
-            if self.model_name in models:
-                return category
-        return "Text Generation"
+        if "Qwen" in self.model_name:
+            return "Instruction Following"
+        elif "DialoGPT" in self.model_name or "blenderbot" in self.model_name:
+            return "Conversational"
+        elif "flan-t5" in self.model_name or "GODEL" in self.model_name:
+            return "Instruction Following"
+        else:
+            return "Text Generation"
     
     def query_model(self, payload: Dict) -> Dict:
-        """Send request to Hugging Face API with detailed error handling"""
+        """Send request to Hugging Face API with enhanced error handling"""
         try:
             response = requests.post(self.api_url, headers=self.headers, json=payload, timeout=30)
             
@@ -261,7 +284,6 @@ class HuggingFaceChatbot:
             response.raise_for_status()
             result = response.json()
             
-            # Handle specific error responses
             if isinstance(result, dict) and "error" in result:
                 error_msg = result["error"]
                 if "loading" in error_msg.lower():
@@ -280,34 +302,50 @@ class HuggingFaceChatbot:
         except requests.exceptions.RequestException as e:
             return {"error": f"Request failed: {str(e)}"}
     
-    def get_response(self, message: str, conversation_history: List[str] = None) -> str:
-        """Generate response from the model based on type"""
+    def get_nutrition_response(self, message: str, conversation_history: List[str] = None) -> str:
+        """Generate nutrition-focused response"""
         if conversation_history is None:
             conversation_history = []
         
-        # Prepare payload based on model type
-        if self.model_type == "Conversational":
+        # Create nutrition-focused prompt
+        nutrition_prompt = f"{self.nutrition_context}\n\nUser question: {message}\n\nMarcus (Nutrition Assistant):"
+        
+        if self.model_type == "Instruction Following":
+            return self._get_instruction_response(nutrition_prompt)
+        elif self.model_type == "Conversational":
             return self._get_conversational_response(message, conversation_history)
-        elif self.model_type == "Instruction Following":
-            return self._get_instruction_response(message)
-        elif self.model_type == "Code Generation":
-            return self._get_code_response(message)
         else:
-            return self._get_text_generation_response(message, conversation_history)
+            return self._get_text_generation_response(nutrition_prompt, conversation_history)
+    
+    def _get_instruction_response(self, prompt: str) -> str:
+        """Handle instruction-following models like Qwen 2.5"""
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": 300,
+                "temperature": 0.7,
+                "do_sample": True,
+                "top_p": 0.9,
+                "repetition_penalty": 1.1
+            },
+            "options": {"wait_for_model": True}
+        }
+        
+        result = self.query_model(payload)
+        return self._extract_response(result, prompt)
     
     def _get_conversational_response(self, message: str, conversation_history: List[str]) -> str:
         """Handle conversational models"""
+        context = f"Marcus the nutrition assistant: {message}"
         if conversation_history:
-            context = " ".join(conversation_history[-8:])
-            input_text = f"{context} {message}"
-        else:
-            input_text = message
+            recent_history = " ".join(conversation_history[-6:])
+            context = f"{recent_history} {context}"
         
         payload = {
-            "inputs": input_text,
+            "inputs": context,
             "parameters": {
-                "max_length": 200,
-                "temperature": 0.7,
+                "max_length": 250,
+                "temperature": 0.8,
                 "do_sample": True,
                 "pad_token_id": 50256
             },
@@ -315,67 +353,28 @@ class HuggingFaceChatbot:
         }
         
         result = self.query_model(payload)
-        return self._extract_response(result, input_text)
+        return self._extract_response(result, context)
     
-    def _get_text_generation_response(self, message: str, conversation_history: List[str]) -> str:
+    def _get_text_generation_response(self, prompt: str, conversation_history: List[str]) -> str:
         """Handle text generation models"""
-        if conversation_history:
-            context = " ".join(conversation_history[-4:])
-            input_text = f"{context}\nHuman: {message}\nAssistant:"
-        else:
-            input_text = f"Human: {message}\nAssistant:"
-        
         payload = {
-            "inputs": input_text,
+            "inputs": prompt,
             "parameters": {
-                "max_new_tokens": 150,
+                "max_new_tokens": 200,
                 "temperature": 0.8,
                 "do_sample": True,
-                "stop": ["Human:", "\n\n"]
+                "stop": ["User:", "Human:", "\n\n"]
             },
             "options": {"wait_for_model": True}
         }
         
         result = self.query_model(payload)
-        return self._extract_response(result, input_text)
-    
-    def _get_instruction_response(self, message: str) -> str:
-        """Handle instruction-following models"""
-        input_text = f"Answer this question: {message}"
-        
-        payload = {
-            "inputs": input_text,
-            "parameters": {
-                "max_new_tokens": 200,
-                "temperature": 0.7
-            },
-            "options": {"wait_for_model": True}
-        }
-        
-        result = self.query_model(payload)
-        return self._extract_response(result, input_text)
-    
-    def _get_code_response(self, message: str) -> str:
-        """Handle code generation models"""
-        input_text = f"# {message}\n"
-        
-        payload = {
-            "inputs": input_text,
-            "parameters": {
-                "max_new_tokens": 200,
-                "temperature": 0.3,
-                "do_sample": True
-            },
-            "options": {"wait_for_model": True}
-        }
-        
-        result = self.query_model(payload)
-        return self._extract_response(result, input_text)
+        return self._extract_response(result, prompt)
     
     def _extract_response(self, result: Dict, input_text: str) -> str:
         """Extract and clean response from API result"""
         if "error" in result:
-            return "Sorry, I encountered an error. Please try again."
+            return "I apologize, but I'm having trouble connecting right now. Please try again in a moment! 🥗"
         
         try:
             if isinstance(result, list) and len(result) > 0:
@@ -383,7 +382,7 @@ class HuggingFaceChatbot:
             elif isinstance(result, dict):
                 generated_text = result.get("generated_text", "")
             else:
-                return "Sorry, I couldn't generate a proper response."
+                return "I'm having trouble generating a response. Could you rephrase your question? 🤔"
             
             # Clean the response
             if input_text in generated_text:
@@ -391,22 +390,26 @@ class HuggingFaceChatbot:
             else:
                 response = generated_text.strip()
             
-            # Additional cleaning
+            # Additional cleaning for nutrition responses
+            response = response.split("User:")[0].strip()
             response = response.split("Human:")[0].strip()
             response = response.split("\n\n")[0].strip()
             
-            return response if response else "I'm not sure how to respond to that."
-        except (KeyError, IndexError, TypeError) as e:
-            return "Sorry, I couldn't generate a proper response."
+            # Ensure response is nutrition-focused if empty or generic
+            if not response or len(response) < 10:
+                return "I'd be happy to help with your nutrition question! Could you provide more details so I can give you the best advice? 🥗"
+            
+            return response
+        except (KeyError, IndexError, TypeError):
+            return "I'm having some technical difficulties. Please try rephrasing your nutrition question! 🍎"
 
 def get_secrets():
     """Retrieve secrets from Streamlit Cloud secrets"""
     try:
         api_token = st.secrets["HUGGINGFACE_API_TOKEN"]
         
-        # Get model category and specific model
-        model_category = st.secrets.get("MODEL_CATEGORY", "Conversational")
-        model_name = st.secrets.get("MODEL_NAME", "microsoft/DialoGPT-medium")
+        # Default to Qwen 2.5 model
+        model_name = st.secrets.get("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
         
         # Validate model exists
         all_models = []
@@ -414,12 +417,12 @@ def get_secrets():
             all_models.extend(models)
         
         if model_name not in all_models:
-            model_name = "microsoft/DialoGPT-medium"
+            model_name = "Qwen/Qwen2.5-7B-Instruct"
             
-        return api_token, model_name, model_category
+        return api_token, model_name
     except KeyError as e:
         st.error(f"Missing secret: {e}")
-        st.error("Please configure your secrets in Streamlit Cloud")
+        st.error("Please configure your HUGGINGFACE_API_TOKEN in Streamlit Cloud secrets")
         st.stop()
 
 def initialize_session_state():
@@ -430,16 +433,38 @@ def initialize_session_state():
         st.session_state.conversation_history = []
     if "chatbot" not in st.session_state:
         st.session_state.chatbot = None
-    if "model_switched" not in st.session_state:
-        st.session_state.model_switched = False
+    if "selected_model" not in st.session_state:
+        st.session_state.selected_model = "Qwen/Qwen2.5-7B-Instruct"
 
 def display_chat_messages():
     """Display all chat messages"""
     if not st.session_state.messages:
         st.markdown("""
         <div class="welcome-message">
-            <h4>🚀 Welcome to AI Chatbot Pro!</h4>
-            <p>I'm powered by advanced Hugging Face AI models. Ask me anything - from casual conversation to coding help!</p>
+            <h4>🥗 Hello! I'm Marcus, Your AI Nutrition Assistant</h4>
+            <p>I'm here to help you with:</p>
+            <ul>
+                <li>🍽️ Meal planning and recipe suggestions</li>
+                <li>📊 Nutritional analysis and dietary advice</li>
+                <li>🎯 Health goal planning and tracking</li>
+                <li>🥑 Food recommendations and alternatives</li>
+                <li>💪 Sports nutrition and wellness tips</li>
+            </ul>
+            <p><strong>Ask me anything about nutrition, and let's start your healthy journey!</strong></p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Display a random nutrition tip
+        tips = [
+            "💡 Tip: Eating a rainbow of colorful fruits and vegetables ensures you get diverse nutrients!",
+            "💡 Tip: Drinking water before meals can help with portion control and digestion.",
+            "💡 Tip: Combining protein with carbs post-workout helps with muscle recovery.",
+            "💡 Tip: Meal prep on Sundays can set you up for a week of healthy eating!"
+        ]
+        
+        st.markdown(f"""
+        <div class="nutrition-tip">
+            <p>{random.choice(tips)}</p>
         </div>
         """, unsafe_allow_html=True)
         return
@@ -455,7 +480,7 @@ def display_chat_messages():
         else:
             st.markdown(f"""
             <div class="chat-message bot-message">
-                <div class="message-header">🤖 AI Assistant</div>
+                <div class="message-header">🥗 Marcus (Nutrition Assistant)</div>
                 <div>{message["content"]}</div>
             </div>
             """, unsafe_allow_html=True)
@@ -463,52 +488,72 @@ def display_chat_messages():
 def get_model_description(model_name: str) -> str:
     """Get model description"""
     descriptions = {
-        "microsoft/DialoGPT-medium": "Conversational AI - Great for chat",
-        "gpt2": "Classic text generation - Creative writing",
-        "google/flan-t5-base": "Instruction following - Task completion",
-        "Salesforce/codegen-350M-mono": "Code generation - Programming help",
-        "facebook/blenderbot-400M-distill": "Social chatbot - Engaging conversations",
-        "EleutherAI/gpt-neo-1.3B": "Large language model - Versatile AI"
+        "Qwen/Qwen2.5-7B-Instruct": "Qwen 2.5 7B - Advanced instruction following",
+        "Qwen/Qwen2.5-3B-Instruct": "Qwen 2.5 3B - Efficient and smart",
+        "Qwen/Qwen2.5-1.5B-Instruct": "Qwen 2.5 1.5B - Fast and responsive",
+        "Qwen/Qwen2.5-14B-Instruct": "Qwen 2.5 14B - Powerful and detailed",
+        "Qwen/Qwen2.5-32B-Instruct": "Qwen 2.5 32B - Maximum performance",
+        "microsoft/DialoGPT-medium": "DialoGPT - Conversational AI",
+        "google/flan-t5-large": "FLAN-T5 - Instruction following",
     }
-    return descriptions.get(model_name, "Advanced AI model")
+    return descriptions.get(model_name, "Advanced AI model for nutrition guidance")
 
 def main():
     # Main container
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
     # Header
-    st.markdown('<h1 class="main-header">🤖 AI Chatbot Pro</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-header">Powered by Multiple Hugging Face AI Models</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🥗 Marcus</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-header">Your Personal AI Nutrition Assistant - Powered by Qwen 2.5</p>', unsafe_allow_html=True)
     
     initialize_session_state()
     
     # Get secrets and initialize chatbot
     try:
-        api_token, model_name, model_category = get_secrets()
+        api_token, default_model = get_secrets()
+        
+        # Model selection sidebar
+        with st.sidebar:
+            st.markdown("### 🤖 Model Selection")
+            
+            # Flatten all models for selection
+            all_models = []
+            for category, models in AVAILABLE_MODELS.items():
+                all_models.extend(models)
+            
+            selected_model = st.selectbox(
+                "Choose AI Model:",
+                all_models,
+                index=all_models.index(st.session_state.selected_model) if st.session_state.selected_model in all_models else 0
+            )
+            
+            if selected_model != st.session_state.selected_model:
+                st.session_state.selected_model = selected_model
+                st.session_state.chatbot = MarcusNutritionChatbot(api_token, selected_model)
+                st.success(f"Switched to {selected_model.split('/')[-1]}!")
         
         # Initialize chatbot if not already done
-        if st.session_state.chatbot is None:
-            st.session_state.chatbot = HuggingFaceChatbot(api_token, model_name)
+        if st.session_state.chatbot is None or st.session_state.chatbot.model_name != selected_model:
+            st.session_state.chatbot = MarcusNutritionChatbot(api_token, selected_model)
             
     except Exception as e:
-        st.error("Failed to initialize chatbot. Please check your configuration.")
+        st.error("Failed to initialize Marcus. Please check your API configuration.")
         st.stop()
     
     # Model info and controls
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col1:
-        if st.button("🔄 Switch Model", use_container_width=True):
-            # Randomly switch to a different model
-            all_models = []
-            for models in AVAILABLE_MODELS.values():
-                all_models.extend(models)
+        if st.button("🔄 Random Model", use_container_width=True):
+            # Randomly switch to a different Qwen model
+            qwen_models = AVAILABLE_MODELS["Qwen 2.5 Models"]
             current_model = st.session_state.chatbot.model_name
-            available_models = [m for m in all_models if m != current_model]
-            new_model = random.choice(available_models)
-            st.session_state.chatbot = HuggingFaceChatbot(api_token, new_model)
-            st.session_state.model_switched = True
-            st.rerun()
+            available_models = [m for m in qwen_models if m != current_model]
+            if available_models:
+                new_model = random.choice(available_models)
+                st.session_state.selected_model = new_model
+                st.session_state.chatbot = MarcusNutritionChatbot(api_token, new_model)
+                st.rerun()
     
     with col2:
         current_model = st.session_state.chatbot.model_name
@@ -525,30 +570,41 @@ def main():
         if st.button("🗑️ Clear Chat", use_container_width=True):
             st.session_state.messages = []
             st.session_state.conversation_history = []
-            st.session_state.model_switched = False
             st.rerun()
     
-    # Show model switch notification
-    if st.session_state.model_switched:
-        st.success(f"✅ Switched to {st.session_state.chatbot.model_name.split('/')[-1]}!")
-        st.session_state.model_switched = False
+    # Quick nutrition topics
+    st.markdown("### 🍎 Quick Topics:")
+    topic_cols = st.columns(4)
+    
+    topics = [
+        ("🍽️ Meal Planning", "Help me create a balanced meal plan for the week"),
+        ("🥗 Recipe Analysis", "Analyze this recipe for nutritional content"),
+        ("💪 Sports Nutrition", "What should I eat before and after workouts?"),
+        ("🎯 Weight Goals", "Help me with healthy weight management strategies")
+    ]
+    
+    for i, (topic_name, topic_prompt) in enumerate(topics):
+        with topic_cols[i]:
+            if st.button(topic_name, use_container_width=True):
+                # Add the topic as a user message
+                st.session_state.messages.append({"role": "user", "content": topic_prompt})
+                st.rerun()
     
     # Chat display container
     st.markdown('<div class="chat-container">', unsafe_allow_html=True)
     display_chat_messages()
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Chat input - Dark themed
+    # Chat input
     st.markdown('<div class="input-container">', unsafe_allow_html=True)
     
-    # Create input form
     with st.form("chat_form", clear_on_submit=True):
         col1, col2 = st.columns([5, 1])
         
         with col1:
             user_input = st.text_input(
                 "Message",
-                placeholder="Type your message here... ✨",
+                placeholder="Ask Marcus about nutrition, meal planning, recipes, or health goals... 🥗",
                 label_visibility="collapsed"
             )
         
@@ -564,30 +620,53 @@ def main():
         st.session_state.conversation_history.append(f"User: {user_input}")
         
         # Show typing indicator
-        with st.spinner("🤖 AI is thinking..."):
+        with st.spinner("🥗 Marcus is preparing your nutrition advice..."):
             try:
-                # Get AI response
-                response = st.session_state.chatbot.get_response(
+                # Get Marcus's nutrition response
+                response = st.session_state.chatbot.get_nutrition_response(
                     user_input, 
                     st.session_state.conversation_history
                 )
                 
-                # Add AI response
+                # Add Marcus's response
                 st.session_state.messages.append({"role": "assistant", "content": response})
-                st.session_state.conversation_history.append(f"Assistant: {response}")
+                st.session_state.conversation_history.append(f"Marcus: {response}")
                 
             except Exception as e:
-                error_msg = f"Sorry, I encountered an error: {str(e)}"
+                error_msg = f"I apologize, but I'm experiencing some technical difficulties. Please try again! 🥗"
                 st.session_state.messages.append({"role": "assistant", "content": error_msg})
         
-        # Rerun to show new messages
         st.rerun()
+    
+    # Process quick topic if clicked
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+        last_message = st.session_state.messages[-1]["content"]
+        
+        # Check if it's a topic prompt that needs processing
+        topic_prompts = [prompt for _, prompt in topics]
+        if last_message in topic_prompts:
+            with st.spinner("🥗 Marcus is preparing your nutrition advice..."):
+                try:
+                    response = st.session_state.chatbot.get_nutrition_response(
+                        last_message, 
+                        st.session_state.conversation_history[:-1]
+                    )
+                    
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    st.session_state.conversation_history.append(f"Marcus: {response}")
+                    
+                except Exception as e:
+                    error_msg = f"I apologize, but I'm experiencing some technical difficulties. Please try again! 🥗"
+                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
+            
+            st.rerun()
     
     # Footer
     st.markdown("""
     <div class="footer">
-        <p>🌟 Built with Streamlit & Hugging Face • Multiple AI Models Available 🌟</p>
-        <p>Switch models anytime for different AI personalities and capabilities!</p>
+        <p>🥗 Marcus - AI Nutrition Assistant • Powered by Qwen 2.5 & Hugging Face 🥗</p>
+        <p>💚 Your journey to better health starts with better nutrition choices! 💚</p>
+        <p><small>⚠️ Always consult healthcare professionals for serious health concerns</small></p>
     </div>
     """, unsafe_allow_html=True)
     
