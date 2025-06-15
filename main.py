@@ -245,14 +245,40 @@ class HuggingFaceChatbot:
         return "Text Generation"
     
     def query_model(self, payload: Dict) -> Dict:
-        """Send request to Hugging Face API"""
+        """Send request to Hugging Face API with detailed error handling"""
         try:
-            response = requests.post(self.api_url, headers=self.headers, json=payload)
+            response = requests.post(self.api_url, headers=self.headers, json=payload, timeout=30)
+            
+            if response.status_code == 503:
+                return {"error": "Model is loading, please wait 1-2 minutes and try again"}
+            elif response.status_code == 401:
+                return {"error": "Invalid API token. Please check your Hugging Face token"}
+            elif response.status_code == 429:
+                return {"error": "Rate limit exceeded. Please wait 30 seconds and try again"}
+            elif response.status_code == 400:
+                return {"error": "Invalid request. Try a shorter message"}
+            
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            
+            # Handle specific error responses
+            if isinstance(result, dict) and "error" in result:
+                error_msg = result["error"]
+                if "loading" in error_msg.lower():
+                    return {"error": "Model is still loading. Please wait 1-2 minutes"}
+                elif "token" in error_msg.lower():
+                    return {"error": "API token issue. Please check your token"}
+                else:
+                    return {"error": f"API Error: {error_msg}"}
+            
+            return result
+            
+        except requests.exceptions.Timeout:
+            return {"error": "Request timeout. Please try again"}
+        except requests.exceptions.ConnectionError:
+            return {"error": "Connection failed. Check your internet connection"}
         except requests.exceptions.RequestException as e:
-            st.error(f"API request failed: {str(e)}")
-            return {"error": str(e)}
+            return {"error": f"Request failed: {str(e)}"}
     
     def get_response(self, message: str, conversation_history: List[str] = None) -> str:
         """Generate response from the model based on type"""
