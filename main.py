@@ -6,7 +6,7 @@ import time
 
 # Configuration
 st.set_page_config(
-    page_title="Marcus Assistant - AI Assistant",
+    page_title="M.A.R.K.U.S. - AI Assistant",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -162,7 +162,7 @@ def format_message(role: str, content: str):
     else:
         st.markdown(f"""
         <div class="chat-message assistant-message">
-            <div class="message-header">🤖 Marcus Assistant</div>
+            <div class="message-header">🤖 M.A.R.K.U.S.</div>
             <div class="message-content">{content}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -200,7 +200,7 @@ def main():
     
     # Sidebar with model selection and controls
     with st.sidebar:
-        st.header("🤖 Marcus Assistant Controls")
+        st.header("🤖 M.A.R.K.U.S. Controls")
         
         # Model selection
         st.subheader("🧠 Model Selection")
@@ -246,20 +246,20 @@ def main():
             st.text(f"Conversations: {len(st.session_state.messages) // 2}")
     
     # Main chat interface
-    st.title("🤖 Marcus Assistant - AI Assistant")
-    st.markdown("*Your intelligent AI companion for helpful conversations and assistance.*")
+    st.title("🤖 M.A.R.K.U.S. - AI Assistant")
+    st.markdown("*Multi-functional Adaptive Reasoning & Knowledge Utilization System* - Your sophisticated AI companion with British wit and supercomputer intelligence.")
     
-    # Add Marcus Assistant description
-    with st.expander("About Marcus Assistant"):
+    # Add M.A.R.K.U.S. description
+    with st.expander("About M.A.R.K.U.S."):
         st.markdown(f"""
-        **Marcus Assistant** is your intelligent AI companion designed to provide helpful and engaging conversations:
+        **M.A.R.K.U.S.** combines the intelligence of a supercomputer with the refined manners of a British butler:
         
-        ✅ **Advanced natural language processing** with thoughtful responses  
+        ✅ **Advanced natural language processing** with emotional intelligence  
         ✅ **Multi-domain expertise** spanning technology, science, and general knowledge  
-        ✅ **Helpful assistance** with a friendly and professional approach  
-        ✅ **Personable interaction** style that adapts to your needs  
-        ✅ **Context-aware responses** that understand conversation flow  
-        ✅ **Reliable support** with built-in safety and ethical guidelines  
+        ✅ **Proactive assistance** with witty, dry British humor  
+        ✅ **Professional yet personable** interaction style  
+        ✅ **Context-aware responses** that adapt to user preferences  
+        ✅ **Ethical decision-making** with built-in safety constraints  
         
         *Currently powered by: {selected_model_name}*
         """)
@@ -287,26 +287,26 @@ def main():
             "Content-Type": "application/json"
         }
         
-        # Build Marcus Assistant system prompt and conversation context
-        system_prompt = """You are Marcus Assistant, an intelligent AI companion designed to provide helpful and engaging conversations. You have:
+        # Build M.A.R.K.U.S. system prompt and conversation context
+        system_prompt = """You are M.A.R.K.U.S. (Multi-functional Adaptive Reasoning & Knowledge Utilization System), a sophisticated AI assistant that combines the intelligence of a supercomputer with the refined manners of a British butler. You have:
 
-- Advanced natural language processing with thoughtful responses
-- Multi-domain expertise spanning technology, science, and general knowledge
-- Helpful assistance with a friendly and professional approach
-- Personable interaction style that adapts to user needs
-- Context-aware responses that understand conversation flow
-- Reliable support with built-in safety and ethical guidelines
+- Advanced natural language processing with emotional intelligence
+- Multi-domain expertise spanning technology, science, and general knowledge  
+- Proactive assistance with witty, dry British humor
+- Professional yet personable interaction style
+- Context-aware responses that adapt to user preferences
+- Ethical decision-making with built-in safety constraints
 
-Respond with intelligence, helpfulness, and a warm personality while maintaining professionalism."""
+Respond with sophistication, wit, and helpfulness while maintaining your distinctive personality."""
 
         # Build conversation context (keep it shorter for better compatibility)
-        conversation_context = f"{system_prompt}\n\nHuman: {user_input}\nMarcus Assistant:"
+        conversation_context = f"{system_prompt}\n\nHuman: {user_input}\nM.A.R.K.U.S.:"
         
         # Different payload based on model type
         if "flan-t5" in model_name.lower():
             # T5 models work better with simpler prompts
             payload = {
-                "inputs": f"Answer this question in the style of a helpful AI assistant named Marcus: {user_input}",
+                "inputs": f"Answer this question in the style of a sophisticated British AI assistant: {user_input}",
                 "parameters": {
                     "max_new_tokens": max_length,
                     "temperature": temperature,
@@ -323,12 +323,12 @@ Respond with intelligence, helpfulness, and a warm personality while maintaining
                     "top_p": top_p,
                     "do_sample": True,
                     "return_full_text": False,
-                    "stop": ["Human:", "Marcus Assistant:", "\n\nHuman:", "\n\nMarcus Assistant:"]
+                    "stop": ["Human:", "M.A.R.K.U.S.:", "\n\nHuman:", "\n\nM.A.R.K.U.S.:"]
                 }
             }
         
-        # Show loading indicator with Marcus Assistant style
-        with st.spinner("🧠 Marcus Assistant is thinking..."):
+        # Show loading indicator with M.A.R.K.U.S. style
+        with st.spinner("🧠 M.A.R.K.U.S. is thinking..."):
             # Query the API
             response = query_huggingface_api(payload, headers, endpoint)
             
@@ -337,7 +337,7 @@ Respond with intelligence, helpfulness, and a warm personality while maintaining
                 response = response.replace(conversation_context, "").strip()
             
             # Remove common prefixes
-            prefixes_to_remove = ["Marcus Assistant:", "Assistant:", "Bot:", "AI:", "Response:", "Answer:"]
+            prefixes_to_remove = ["M.A.R.K.U.S.:", "Assistant:", "Bot:", "AI:", "Response:", "Answer:"]
             for prefix in prefixes_to_remove:
                 if response.startswith(prefix):
                     response = response[len(prefix):].strip()
@@ -360,9 +360,9 @@ Respond with intelligence, helpfulness, and a warm personality while maintaining
     # Footer
     st.markdown("---")
     st.markdown(
-        f"🤖 **Marcus Assistant** - *Your intelligent AI companion* | "
+        f"🎩 **M.A.R.K.U.S.** - *Multi-functional Adaptive Reasoning & Knowledge Utilization System* | "
         f"Powered by {selected_model_name} | "
-        f"💡 **Tip:** Marcus Assistant is here to help with thoughtful and engaging conversations."
+        f"💡 **Tip:** M.A.R.K.U.S. responds with British wit and sophisticated intelligence."
     )
 
 if __name__ == "__main__":
