@@ -1,0 +1,10 @@
+# Core dependencies for Streamlit Hugging Face Chatbot
+streamlit>=1.28.0
+requests>=2.31.0
+
+# Optional: For better performance and additional features
+urllib3>=2.0.0
+certifi>=2023.7.22
+
+# For Python typing support (usually included in Python 3.5+)
+typing-extensions>=4.7.0
