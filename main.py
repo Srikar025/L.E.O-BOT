@@ -45,18 +45,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Alternative models that are more likely to work
+# Free models that don't require paid inference endpoints
 AVAILABLE_MODELS = {
-    "Microsoft DialoGPT Medium": "microsoft/DialoGPT-medium",
+    "GPT-2 Small": "gpt2",
+    "GPT-2 Medium": "gpt2-medium",
+    "DistilGPT2": "distilgpt2",
     "Microsoft DialoGPT Small": "microsoft/DialoGPT-small",
+    "Microsoft DialoGPT Medium": "microsoft/DialoGPT-medium",
+    "EleutherAI GPT-Neo 125M": "EleutherAI/gpt-neo-125M",
+    "EleutherAI GPT-Neo 1.3B": "EleutherAI/gpt-neo-1.3B",
     "Facebook BlenderBot Small": "facebook/blenderbot-90M",
     "Google Flan-T5 Small": "google/flan-t5-small",
     "Google Flan-T5 Base": "google/flan-t5-base",
-    "DistilGPT2": "distilgpt2",
-    "GPT-2 Small": "gpt2",
-    "GPT-2 Medium": "gpt2-medium",
-    "EleutherAI GPT-Neo 125M": "EleutherAI/gpt-neo-125M",
-    "EleutherAI GPT-Neo 1.3B": "EleutherAI/gpt-neo-1.3B"
+    "T5 Small": "t5-small",
+    "T5 Base": "t5-base",
+    "BART Base": "facebook/bart-base",
+    "DistilBERT": "distilbert-base-uncased",
+    "RoBERTa Base": "roberta-base"
 }
 
 def init_session_state():
@@ -205,7 +210,7 @@ def main():
             return
             
         # Try to get model from secrets, with fallback options
-        preferred_model = st.secrets.get("DEFAULT_MODEL", "microsoft/DialoGPT-medium")
+        preferred_model = st.secrets.get("DEFAULT_MODEL", "gpt2")
         endpoint_type = st.secrets.get("DEFAULT_ENDPOINT_TYPE", "Inference API")
         
         # Advanced settings from secrets (with defaults)
@@ -219,7 +224,7 @@ def main():
         **Required secrets:**
         ```toml
         HUGGINGFACE_TOKEN = "hf_your_token_here"
-        DEFAULT_MODEL = "microsoft/DialoGPT-medium"  # Fallback model
+        DEFAULT_MODEL = "gpt2"  # Free model
         DEFAULT_ENDPOINT_TYPE = "Inference API"
         ```
         """)
