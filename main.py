@@ -3,6 +3,7 @@ import requests
 import json
 from typing import List, Dict
 import time
+import os
 
 # Configuration
 st.set_page_config(
@@ -11,6 +12,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# API Configuration
+API_URL = "https://router.huggingface.co/featherless-ai/v1/chat/completions"
 
 # Custom CSS for better styling
 st.markdown("""
@@ -45,23 +49,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Free models that don't require paid inference endpoints
+# Models compatible with the new inference provider
 AVAILABLE_MODELS = {
-    "GPT-2 Small": "gpt2",
-    "GPT-2 Medium": "gpt2-medium",
-    "DistilGPT2": "distilgpt2",
-    "Microsoft DialoGPT Small": "microsoft/DialoGPT-small",
-    "Microsoft DialoGPT Medium": "microsoft/DialoGPT-medium",
-    "EleutherAI GPT-Neo 125M": "EleutherAI/gpt-neo-125M",
-    "EleutherAI GPT-Neo 1.3B": "EleutherAI/gpt-neo-1.3B",
-    "Facebook BlenderBot Small": "facebook/blenderbot-90M",
-    "Google Flan-T5 Small": "google/flan-t5-small",
-    "Google Flan-T5 Base": "google/flan-t5-base",
-    "T5 Small": "t5-small",
-    "T5 Base": "t5-base",
-    "BART Base": "facebook/bart-base",
-    "DistilBERT": "distilbert-base-uncased",
-    "RoBERTa Base": "roberta-base"
+    "DeepSeek R1": "deepseek-ai/DeepSeek-R1-0528",
+    "DeepSeek Coder V2": "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
+    "Mistral Large": "mistralai/Mistral-Large",
+    "Mixtral 8x22B": "mistralai/Mixtral-8x22B-Instruct-v0.1",
+    "Llama 3 70B": "meta-llama/Meta-Llama-3-70B-Instruct"
 }
 
 def init_session_state():
@@ -70,107 +64,42 @@ def init_session_state():
         st.session_state.messages = []
     if "hf_token" not in st.session_state:
         st.session_state.hf_token = ""
-    if "model_endpoint" not in st.session_state:
-        st.session_state.model_endpoint = ""
 
-def test_model_availability(model_name: str, hf_token: str) -> bool:
-    """Test if a model is available on Hugging Face Inference API"""
-    endpoint = f"https://api-inference.huggingface.co/models/{model_name}"
-    headers = {"Authorization": f"Bearer {hf_token}"}
+def query_chat_api(model: str, headers: Dict, messages: List[Dict]) -> str:
+    """Query the chat completions API with error handling"""
+    payload = {
+        "model": model,
+        "messages": messages,
+        "stream": False  # We'll handle responses once they are complete
+    }
     
     try:
-        # Send a simple test request
-        test_payload = {"inputs": "Hello", "parameters": {"max_new_tokens": 1}}
-        response = requests.post(endpoint, headers=headers, json=test_payload, timeout=15)
-        
-        # Check if the response indicates the model is available
-        if response.status_code == 200:
-            return True
-        elif response.status_code == 503:
-            # Model is loading, but available
-            return True
-        elif response.status_code == 404:
-            # Model not found
-            st.error(f"❌ Model {model_name} not found (404)")
-            return False
-        elif response.status_code == 401:
-            # Unauthorized - token issue
-            st.error(f"❌ Unauthorized access (401) - Check your Hugging Face token")
-            return False
-        elif response.status_code == 403:
-            # Forbidden - model access issue
-            st.error(f"❌ Access forbidden (403) - Model may require special access")
-            return False
-        else:
-            st.error(f"❌ Unexpected status code: {response.status_code}")
-            return False
-    except requests.exceptions.Timeout:
-        st.error(f"❌ Request timed out for {model_name}")
-        return False
-    except requests.exceptions.ConnectionError:
-        st.error(f"❌ Connection error for {model_name}")
-        return False
-    except Exception as e:
-        st.error(f"❌ Error testing {model_name}: {str(e)}")
-        return False
-
-def query_huggingface_api(payload: Dict, headers: Dict, endpoint: str) -> str:
-    """Query the Hugging Face API with better error handling"""
-    try:
-        response = requests.post(endpoint, headers=headers, json=payload, timeout=30)
-        
-        # Handle different status codes
-        if response.status_code == 503:
-            # Model is loading
-            st.warning("⏳ Model is loading. This may take a few moments...")
-            time.sleep(20)  # Wait and retry
-            response = requests.post(endpoint, headers=headers, json=payload, timeout=30)
+        response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
         
         response.raise_for_status()
         
-        # Handle different response formats
         result = response.json()
         
-        # For text generation models
-        if isinstance(result, list) and len(result) > 0:
-            if 'generated_text' in result[0]:
-                generated = result[0]['generated_text']
-                # Remove the input prompt from the response
-                if 'inputs' in payload and payload['inputs'] in generated:
-                    generated = generated.replace(payload['inputs'], '').strip()
-                return generated if generated else "I apologize, but I couldn't generate a proper response. Please try again."
-            elif 'text' in result[0]:
-                return result[0]['text']
-        
-        # For conversational models
-        if isinstance(result, dict):
-            if 'generated_text' in result:
-                generated = result['generated_text']
-                # Remove the input prompt from the response
-                if 'inputs' in payload and payload['inputs'] in generated:
-                    generated = generated.replace(payload['inputs'], '').strip()
-                return generated if generated else "I apologize, but I couldn't generate a proper response. Please try again."
-            elif 'response' in result:
-                return result['response']
-            elif 'text' in result:
-                return result['text']
-            elif 'error' in result:
-                st.error(f"API Error: {result['error']}")
-                return "I encountered an error while processing your request. Please try again or try a different model."
+        if "choices" in result and len(result["choices"]) > 0:
+            message = result["choices"][0].get("message", {})
+            content = message.get("content", "")
+            return content if content else "I apologize, but I couldn't generate a proper response. Please try again."
+        elif "error" in result:
+            st.error(f"API Error: {result['error']}")
+            return "I encountered an error while processing your request. Please check the model compatibility or your API token."
         
         return str(result)
         
     except requests.exceptions.Timeout:
-        st.error("Request timed out. The model might be busy.")
+        st.error("Request timed out. The model might be busy or the request too long.")
         return "I apologize for the delay. The system is currently experiencing high demand. Please try again shortly."
     except requests.exceptions.RequestException as e:
-        if "404" in str(e):
-            st.error("Model not found. Please check if the model exists and is accessible.")
-            return "The selected model appears to be unavailable. Please try selecting a different model."
         st.error(f"API Request Error: {str(e)}")
+        if e.response:
+            st.error(f"Response Content: {e.response.text}")
         return "I apologize, but I'm experiencing some connectivity issues at the moment. Please try again shortly."
     except json.JSONDecodeError:
-        st.error("Error: Invalid JSON response from API")
+        st.error("Error: Invalid JSON response from API. The model may be unavailable.")
         return "I received an unexpected response format. Please check your configuration."
     except Exception as e:
         st.error(f"Unexpected Error: {str(e)}")
@@ -198,23 +127,26 @@ def main():
     
     # Load configuration from secrets
     try:
-        hf_token = st.secrets.get("HUGGINGFACE_TOKEN", "")
+        hf_token = st.secrets.get("HF_TOKEN")
         if not hf_token:
-            st.error("🚨 **Configuration Error**: HUGGINGFACE_TOKEN not found in secrets.")
+            # Fallback for local development if secrets aren't set
+            hf_token = os.environ.get("HF_TOKEN")
+
+        if not hf_token:
+            st.error("🚨 **Configuration Error**: HF_TOKEN not found in secrets or environment variables.")
             st.markdown("""
             **Please add your Hugging Face token to Streamlit Cloud secrets:**
             ```toml
-            HUGGINGFACE_TOKEN = "hf_your_token_here"
+            HF_TOKEN = "hf_your_token_here"
             ```
+            **Or set it as an environment variable for local development.**
             """)
             return
             
         # Try to get model from secrets, with fallback options
-        preferred_model = st.secrets.get("DEFAULT_MODEL", "gpt2")
-        endpoint_type = st.secrets.get("DEFAULT_ENDPOINT_TYPE", "Inference API")
+        preferred_model = st.secrets.get("DEFAULT_MODEL", "deepseek-ai/DeepSeek-R1-0528")
         
         # Advanced settings from secrets (with defaults)
-        max_length = st.secrets.get("MAX_RESPONSE_LENGTH", 200)
         temperature = st.secrets.get("TEMPERATURE", 0.7)
         top_p = st.secrets.get("TOP_P", 0.9)
         
@@ -223,9 +155,8 @@ def main():
         st.markdown("""
         **Required secrets:**
         ```toml
-        HUGGINGFACE_TOKEN = "hf_your_token_here"
-        DEFAULT_MODEL = "gpt2"  # Free model
-        DEFAULT_ENDPOINT_TYPE = "Inference API"
+        HF_TOKEN = "hf_your_token_here"
+        DEFAULT_MODEL = "deepseek-ai/DeepSeek-R1-0528"
         ```
         """)
         return
@@ -243,26 +174,16 @@ def main():
         )
         
         model_name = AVAILABLE_MODELS[selected_model_name]
-        endpoint = f"https://api-inference.huggingface.co/models/{model_name}"
-        
-        # Test model availability
-        if st.button("🔍 Test Model", use_container_width=True):
-            with st.spinner("Testing model availability..."):
-                if test_model_availability(model_name, hf_token):
-                    st.success(f"✅ {selected_model_name} is available!")
-                else:
-                    st.error(f"❌ {selected_model_name} is not available. Try another model.")
         
         # Status indicators
-        st.success("🔐 Configuration loaded from secrets")
+        st.success("🔐 Configuration loaded")
         st.info(f"🧠 Current Model: {selected_model_name}")
-        st.info(f"🌐 Endpoint: {endpoint_type}")
+        st.info(f"🌐 Provider: Featherless AI Router")
         
         st.markdown("---")
         
-        # Advanced settings
-        with st.expander("⚙️ Advanced Settings"):
-            max_length = st.slider("Max Response Length", 50, 500, max_length)
+        # Advanced settings (Note: these may not be supported by all models/endpoints)
+        with st.expander("⚙️ Advanced Settings (Model Dependent)"):
             temperature = st.slider("Temperature", 0.1, 2.0, temperature, 0.1)
             top_p = st.slider("Top P", 0.1, 1.0, top_p, 0.1)
         
@@ -279,7 +200,7 @@ def main():
     
     # Main chat interface
     st.title("🥗 L.E.O - Nutrition & Diet Assistant")
-    st.markdown("*Your expert guide to nutrition, diet, and wellness - providing science-based advice for a healthier lifestyle.*")
+    st.markdown("*Your expert guide to nutrition, diet, and wellness - powered by advanced AI models.*")
     
     # Add L.E.O description
     with st.expander("About L.E.O"):
@@ -319,7 +240,6 @@ def main():
             "Content-Type": "application/json"
         }
         
-        # Build L.E.O system prompt and conversation context
         system_prompt = """You are NutriGuide, a highly knowledgeable and friendly AI assistant who is an expert in all things related to nutrition, diet, food science, and wellness.
 
 You provide accurate, science-based, and practical advice on topics such as:
@@ -344,44 +264,15 @@ If users ask non-nutrition-related questions, politely guide them back to nutrit
 
 Focus on macros, supplements, and fitness-linked meal plans. Include sport-specific nutrition strategies."""
 
-        # Build conversation context (keep it shorter for better compatibility)
-        conversation_context = f"{system_prompt}\n\nHuman: {user_input}\nL.E.O:"
+        # Build conversation context
+        messages = [{"role": "system", "content": system_prompt}] + st.session_state.messages
         
-        # Different payload based on model type
-        if "flan-t5" in model_name.lower():
-            # T5 models work better with simpler prompts
-            payload = {
-                "inputs": f"Answer this nutrition question as a friendly diet expert: {user_input}",
-                "parameters": {
-                    "max_new_tokens": max_length,
-                    "temperature": temperature,
-                    "do_sample": True
-                }
-            }
-        else:
-            # Other models
-            payload = {
-                "inputs": conversation_context,
-                "parameters": {
-                    "max_new_tokens": max_length,
-                    "temperature": temperature,
-                    "top_p": top_p,
-                    "do_sample": True,
-                    "return_full_text": False,
-                    "stop": ["Human:", "L.E.O:", "\n\nHuman:", "\n\nL.E.O:"]
-                }
-            }
-        
-        # Show loading indicator with L.E.O style
-        with st.spinner("🥗 L.E.O is analyzing your nutrition question..."):
+        # Show loading indicator
+        with st.spinner(f"🥗 L.E.O is consulting with {selected_model_name}..."):
             # Query the API
-            response = query_huggingface_api(payload, headers, endpoint)
+            response = query_chat_api(model_name, headers, messages)
             
             # Clean up the response
-            if conversation_context in response:
-                response = response.replace(conversation_context, "").strip()
-            
-            # Remove common prefixes
             prefixes_to_remove = ["L.E.O:", "Assistant:", "Bot:", "AI:", "Response:", "Answer:", "NutriGuide:"]
             for prefix in prefixes_to_remove:
                 if response.startswith(prefix):
