@@ -61,7 +61,14 @@ AVAILABLE_MODELS = {
     "T5 Base": "t5-base",
     "BART Base": "facebook/bart-base",
     "DistilBERT": "distilbert-base-uncased",
-    "RoBERTa Base": "roberta-base"
+    "RoBERTa Base": "roberta-base",
+    "Qwen 1.5 0.5B": "Qwen/Qwen1.5-0.5B",
+    "Qwen 1.5 1.8B": "Qwen/Qwen1.5-1.8B",
+    "Qwen 1.5 3B": "Qwen/Qwen1.5-3B",
+    "Qwen 1.5 7B": "Qwen/Qwen1.5-7B",
+    "Qwen 2 0.5B": "Qwen/Qwen2-0.5B",
+    "Qwen 2 1.5B": "Qwen/Qwen2-1.5B",
+    "Qwen 2 4B": "Qwen/Qwen2-4B"
 }
 
 def init_session_state():
