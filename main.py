@@ -47,12 +47,16 @@ st.markdown("""
 
 # Alternative models that are more likely to work
 AVAILABLE_MODELS = {
-    "Microsoft DialoGPT Large": "microsoft/DialoGPT-large",
-    "Facebook BlenderBot": "facebook/blenderbot-400M-distill",
-    "Google Flan-T5 Large": "google/flan-t5-large",
-    "Mistral 7B Instruct": "mistralai/Mistral-7B-Instruct-v0.1",
-    "Code Llama Instruct": "codellama/CodeLlama-7b-Instruct-hf",
-    "Qwen 2.5 (if available)": "Qwen/Qwen2.5-72B-Instruct"
+    "Microsoft DialoGPT Medium": "microsoft/DialoGPT-medium",
+    "Microsoft DialoGPT Small": "microsoft/DialoGPT-small",
+    "Facebook BlenderBot Small": "facebook/blenderbot-90M",
+    "Google Flan-T5 Small": "google/flan-t5-small",
+    "Google Flan-T5 Base": "google/flan-t5-base",
+    "DistilGPT2": "distilgpt2",
+    "GPT-2 Small": "gpt2",
+    "GPT-2 Medium": "gpt2-medium",
+    "EleutherAI GPT-Neo 125M": "EleutherAI/gpt-neo-125M",
+    "EleutherAI GPT-Neo 1.3B": "EleutherAI/gpt-neo-1.3B"
 }
 
 def init_session_state():
@@ -72,7 +76,7 @@ def test_model_availability(model_name: str, hf_token: str) -> bool:
     try:
         # Send a simple test request
         test_payload = {"inputs": "Hello", "parameters": {"max_new_tokens": 1}}
-        response = requests.post(endpoint, headers=headers, json=test_payload, timeout=10)
+        response = requests.post(endpoint, headers=headers, json=test_payload, timeout=15)
         
         # Check if the response indicates the model is available
         if response.status_code == 200:
@@ -82,10 +86,27 @@ def test_model_availability(model_name: str, hf_token: str) -> bool:
             return True
         elif response.status_code == 404:
             # Model not found
+            st.error(f"❌ Model {model_name} not found (404)")
+            return False
+        elif response.status_code == 401:
+            # Unauthorized - token issue
+            st.error(f"❌ Unauthorized access (401) - Check your Hugging Face token")
+            return False
+        elif response.status_code == 403:
+            # Forbidden - model access issue
+            st.error(f"❌ Access forbidden (403) - Model may require special access")
             return False
         else:
+            st.error(f"❌ Unexpected status code: {response.status_code}")
             return False
-    except Exception:
+    except requests.exceptions.Timeout:
+        st.error(f"❌ Request timed out for {model_name}")
+        return False
+    except requests.exceptions.ConnectionError:
+        st.error(f"❌ Connection error for {model_name}")
+        return False
+    except Exception as e:
+        st.error(f"❌ Error testing {model_name}: {str(e)}")
         return False
 
 def query_huggingface_api(payload: Dict, headers: Dict, endpoint: str) -> str:
@@ -170,15 +191,21 @@ def format_message(role: str, content: str):
 def main():
     init_session_state()
     
-    # Load configuration from secrets with fallback
+    # Load configuration from secrets
     try:
         hf_token = st.secrets.get("HUGGINGFACE_TOKEN", "")
         if not hf_token:
             st.error("🚨 **Configuration Error**: HUGGINGFACE_TOKEN not found in secrets.")
+            st.markdown("""
+            **Please add your Hugging Face token to Streamlit Cloud secrets:**
+            ```toml
+            HUGGINGFACE_TOKEN = "hf_your_token_here"
+            ```
+            """)
             return
             
         # Try to get model from secrets, with fallback options
-        preferred_model = st.secrets.get("DEFAULT_MODEL", "microsoft/DialoGPT-large")
+        preferred_model = st.secrets.get("DEFAULT_MODEL", "microsoft/DialoGPT-medium")
         endpoint_type = st.secrets.get("DEFAULT_ENDPOINT_TYPE", "Inference API")
         
         # Advanced settings from secrets (with defaults)
@@ -192,7 +219,7 @@ def main():
         **Required secrets:**
         ```toml
         HUGGINGFACE_TOKEN = "hf_your_token_here"
-        DEFAULT_MODEL = "microsoft/DialoGPT-large"  # Fallback model
+        DEFAULT_MODEL = "microsoft/DialoGPT-medium"  # Fallback model
         DEFAULT_ENDPOINT_TYPE = "Inference API"
         ```
         """)
@@ -222,7 +249,7 @@ def main():
                     st.error(f"❌ {selected_model_name} is not available. Try another model.")
         
         # Status indicators
-        st.success("🔐 Configuration loaded")
+        st.success("🔐 Configuration loaded from secrets")
         st.info(f"🧠 Current Model: {selected_model_name}")
         st.info(f"🌐 Endpoint: {endpoint_type}")
         
