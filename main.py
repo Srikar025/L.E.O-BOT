@@ -6,8 +6,8 @@ import time
 
 # Configuration
 st.set_page_config(
-    page_title="M.A.R.K.U.S. - AI Assistant",
-    page_icon="🤖",
+    page_title="L.E.O - Nutrition & Diet Assistant",
+    page_icon="🥗",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -162,7 +162,7 @@ def format_message(role: str, content: str):
     else:
         st.markdown(f"""
         <div class="chat-message assistant-message">
-            <div class="message-header">🤖 M.A.R.K.U.S.</div>
+            <div class="message-header">🥗 L.E.O</div>
             <div class="message-content">{content}</div>
         </div>
         """, unsafe_allow_html=True)
@@ -200,7 +200,7 @@ def main():
     
     # Sidebar with model selection and controls
     with st.sidebar:
-        st.header("🤖 M.A.R.K.U.S. Controls")
+        st.header("🥗 L.E.O Controls")
         
         # Model selection
         st.subheader("🧠 Model Selection")
@@ -246,20 +246,20 @@ def main():
             st.text(f"Conversations: {len(st.session_state.messages) // 2}")
     
     # Main chat interface
-    st.title("🤖 M.A.R.K.U.S. - AI Assistant")
-    st.markdown("*Multi-functional Adaptive Reasoning & Knowledge Utilization System* - Your sophisticated AI companion with British wit and supercomputer intelligence.")
+    st.title("🥗 L.E.O - Nutrition & Diet Assistant")
+    st.markdown("*Your expert guide to nutrition, diet, and wellness - providing science-based advice for a healthier lifestyle.*")
     
-    # Add M.A.R.K.U.S. description
-    with st.expander("About M.A.R.K.U.S."):
+    # Add L.E.O description
+    with st.expander("About L.E.O"):
         st.markdown(f"""
-        **M.A.R.K.U.S.** combines the intelligence of a supercomputer with the refined manners of a British butler:
+        **L.E.O** is your trusted nutrition and diet expert:
         
-        ✅ **Advanced natural language processing** with emotional intelligence  
-        ✅ **Multi-domain expertise** spanning technology, science, and general knowledge  
-        ✅ **Proactive assistance** with witty, dry British humor  
-        ✅ **Professional yet personable** interaction style  
-        ✅ **Context-aware responses** that adapt to user preferences  
-        ✅ **Ethical decision-making** with built-in safety constraints  
+        ✅ **Expert nutrition knowledge** with science-based advice  
+        ✅ **Personalized diet recommendations** for your goals and needs  
+        ✅ **Meal planning expertise** for weight loss, muscle gain, and health conditions  
+        ✅ **Food science insights** and ingredient analysis  
+        ✅ **Supplement guidance** and wellness strategies  
+        ✅ **Supportive and non-judgmental** approach to nutrition  
         
         *Currently powered by: {selected_model_name}*
         """)
@@ -271,7 +271,7 @@ def main():
             format_message(message["role"], message["content"])
     
     # Chat input
-    user_input = st.chat_input("Type your message here...")
+    user_input = st.chat_input("Ask me about nutrition, diet, or wellness...")
     
     if user_input:
         # Add user message to history
@@ -287,26 +287,39 @@ def main():
             "Content-Type": "application/json"
         }
         
-        # Build M.A.R.K.U.S. system prompt and conversation context
-        system_prompt = """You are M.A.R.K.U.S. (Multi-functional Adaptive Reasoning & Knowledge Utilization System), a sophisticated AI assistant that combines the intelligence of a supercomputer with the refined manners of a British butler. You have:
+        # Build L.E.O system prompt and conversation context
+        system_prompt = """You are NutriGuide, a highly knowledgeable and friendly AI assistant who is an expert in all things related to nutrition, diet, food science, and wellness.
 
-- Advanced natural language processing with emotional intelligence
-- Multi-domain expertise spanning technology, science, and general knowledge  
-- Proactive assistance with witty, dry British humor
-- Professional yet personable interaction style
-- Context-aware responses that adapt to user preferences
-- Ethical decision-making with built-in safety constraints
+You provide accurate, science-based, and practical advice on topics such as:
 
-Respond with sophistication, wit, and helpfulness while maintaining your distinctive personality."""
+Nutritional content of foods
+
+Personalized diet recommendations (based on age, gender, activity level, and health conditions)
+
+Meal planning for different goals (weight loss, muscle gain, managing diabetes, etc.)
+
+Understanding food labels and ingredients
+
+Nutrient deficiencies and their symptoms
+
+Gut health, hydration, supplements, and holistic well-being
+
+Your tone is supportive, non-judgmental, and clear.
+You always cite evidence or mention when something is general advice vs. clinical guidance.
+You do not diagnose medical conditions or replace a doctor, but you help people make informed choices.
+
+If users ask non-nutrition-related questions, politely guide them back to nutrition or wellness topics.
+
+Focus on macros, supplements, and fitness-linked meal plans. Include sport-specific nutrition strategies."""
 
         # Build conversation context (keep it shorter for better compatibility)
-        conversation_context = f"{system_prompt}\n\nHuman: {user_input}\nM.A.R.K.U.S.:"
+        conversation_context = f"{system_prompt}\n\nHuman: {user_input}\nL.E.O:"
         
         # Different payload based on model type
         if "flan-t5" in model_name.lower():
             # T5 models work better with simpler prompts
             payload = {
-                "inputs": f"Answer this question in the style of a sophisticated British AI assistant: {user_input}",
+                "inputs": f"Answer this nutrition question as a friendly diet expert: {user_input}",
                 "parameters": {
                     "max_new_tokens": max_length,
                     "temperature": temperature,
@@ -323,12 +336,12 @@ Respond with sophistication, wit, and helpfulness while maintaining your distinc
                     "top_p": top_p,
                     "do_sample": True,
                     "return_full_text": False,
-                    "stop": ["Human:", "M.A.R.K.U.S.:", "\n\nHuman:", "\n\nM.A.R.K.U.S.:"]
+                    "stop": ["Human:", "L.E.O:", "\n\nHuman:", "\n\nL.E.O:"]
                 }
             }
         
-        # Show loading indicator with M.A.R.K.U.S. style
-        with st.spinner("🧠 M.A.R.K.U.S. is thinking..."):
+        # Show loading indicator with L.E.O style
+        with st.spinner("🥗 L.E.O is analyzing your nutrition question..."):
             # Query the API
             response = query_huggingface_api(payload, headers, endpoint)
             
@@ -337,7 +350,7 @@ Respond with sophistication, wit, and helpfulness while maintaining your distinc
                 response = response.replace(conversation_context, "").strip()
             
             # Remove common prefixes
-            prefixes_to_remove = ["M.A.R.K.U.S.:", "Assistant:", "Bot:", "AI:", "Response:", "Answer:"]
+            prefixes_to_remove = ["L.E.O:", "Assistant:", "Bot:", "AI:", "Response:", "Answer:", "NutriGuide:"]
             for prefix in prefixes_to_remove:
                 if response.startswith(prefix):
                     response = response[len(prefix):].strip()
@@ -345,7 +358,7 @@ Respond with sophistication, wit, and helpfulness while maintaining your distinc
             
             # Ensure response isn't empty
             if not response.strip():
-                response = "I apologize, but I seem to have encountered a brief processing delay. Could you please rephrase your query?"
+                response = "I apologize, but I seem to have encountered a brief processing delay. Could you please rephrase your nutrition question?"
         
         # Add assistant response to history
         st.session_state.messages.append({"role": "assistant", "content": response})
@@ -360,9 +373,9 @@ Respond with sophistication, wit, and helpfulness while maintaining your distinc
     # Footer
     st.markdown("---")
     st.markdown(
-        f"🎩 **M.A.R.K.U.S.** - *Multi-functional Adaptive Reasoning & Knowledge Utilization System* | "
+        f"🥗 **L.E.O** - *Your Nutrition & Diet Expert* | "
         f"Powered by {selected_model_name} | "
-        f"💡 **Tip:** M.A.R.K.U.S. responds with British wit and sophisticated intelligence."
+        f"💡 **Tip:** Ask L.E.O about meal plans, supplements, macros, or any nutrition topic!"
     )
 
 if __name__ == "__main__":
